@@ -62,9 +62,9 @@ from matplotlib.colors import Normalize
 from scipy.optimize import least_squares
 
 
-# =============================================================================
-# 1. FLUID PROPERTIES
-# =============================================================================
+
+# Fluid properties
+
 
 
 @dataclass(frozen=True)
@@ -138,9 +138,9 @@ LOX = Fluid(
 )
 
 
-# Rounded representative liquid-methane properties near its normal boiling
-# point. The deliberately compact correlations keep this student project easy
-# to inspect; professional work should use a validated property package.
+# Approximate methane properties
+
+
 LCH4 = Fluid(
     name="Liquid methane (LCH4)",
     reference_temperature_k=112.0,
@@ -157,9 +157,9 @@ LCH4 = Fluid(
 )
 
 
-# =============================================================================
-# 2. HYDRAULIC COMPONENTS
-# =============================================================================
+
+# Hydraulic components
+
 
 
 GRAVITY_M_S2 = 9.80665
@@ -269,7 +269,7 @@ class Valve(Component):
 
     @property
     def effective_loss_k(self) -> float:
-        # Generic approximation; hardware-specific Cv data should replace this.
+        # Approximate valve loss
         return self.full_open_loss_k / self.opening_fraction**2
 
     def pressure_loss_pa(
@@ -369,9 +369,9 @@ class Pump(Component):
         }
 
 
-# =============================================================================
-# 3. NETWORK DATA AND NONLINEAR SOLVER
-# =============================================================================
+
+# Network solver
+
 
 
 @dataclass
@@ -494,7 +494,7 @@ class Network:
             flows = vector[number_of_pressures:]
             equations: list[float] = []
 
-            # Branch momentum/component equations.
+            # Pressure equations
             for edge, mass_flow in zip(self.edges, flows, strict=True):
                 pressure_start = node_pressure(edge.start, vector)
                 pressure_end = node_pressure(edge.end, vector)
@@ -508,7 +508,7 @@ class Network:
                     (pressure_start - pressure_end + gain - loss) / 100_000.0
                 )
 
-            # Mass conservation at each unknown-pressure node.
+            # Mass conservation
             for node in free_nodes:
                 inflow = sum(
                     flow
@@ -640,9 +640,9 @@ class Network:
         raise ValueError("No pump exists in the network.")
 
 
-# =============================================================================
-# 4. LOX TRANSFER SYSTEM AND SCENARIOS
-# =============================================================================
+
+# LOX transfer system
+
 
 
 @dataclass(frozen=True)
@@ -771,9 +771,9 @@ def solve_scenario(scenario: Scenario) -> tuple[Network, Solution]:
     return network, solution
 
 
-# =============================================================================
-# 4B. DUAL-PROPELLANT ENGINE FEED SYSTEM
-# =============================================================================
+
+# Dual-propellant feed system
+
 
 
 @dataclass(frozen=True)
@@ -1184,10 +1184,7 @@ def solve_propulsion_system(scenario: PropulsionScenario) -> PropulsionSolution:
     )
 
 
-# =============================================================================
-# 5. REPORTING AND VISUALIZATION
-# =============================================================================
-
+# Reporting and plots
 
 def print_nominal_report(network: Network, solution: Solution) -> None:
     pump = network.pump_check(solution)
@@ -1353,9 +1350,9 @@ def plot_valve_sweep(openings: list[float], flows: list[float], path: Path) -> N
     plt.close(fig)
 
 
-# =============================================================================
-# 6. BUILT-IN VERIFICATION AND COMPLETE PROJECT RUN
-# =============================================================================
+
+# Checks and main run
+
 
 
 def run_self_checks() -> None:
@@ -1401,8 +1398,8 @@ def run_self_checks() -> None:
         flows = [item.mass_flow_kg_s for item in solution.edge_results.values()]
         assert max(flows) - min(flows) < 1.0e-8
 
-    # Off-design cases remain solvable but are no longer shown as requirement-
-    # compliant merely because the nonlinear equations converge.
+    # Check off-design cases
+
     low_pressure = solve_propulsion_system(
         PropulsionScenario(
             lox_tank_pressure_pa=330.0 * PSI_TO_PA,
@@ -1514,9 +1511,9 @@ def export_static_results() -> None:
     print("Important: this is a steady, single-phase preliminary model.")
 
 
-# =============================================================================
+
 # 7. INTERACTIVE LOCAL WEB DASHBOARD
-# =============================================================================
+
 
 
 DASHBOARD_HTML = r'''<!doctype html>
